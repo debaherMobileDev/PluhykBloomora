@@ -2,23 +2,20 @@
 //  ContentView.swift
 //  PluhykBloomora
 //
-//  Created by Simon Bakhanets on 24.01.2026.
+//  This file is not used. See PluhykBloomoraApp.swift for the main entry point.
 //
 
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        Text("Please use PluhykBloomoraApp.swift")
+            .padding()
     }
 }
 
-#Preview {
-    ContentView()
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
