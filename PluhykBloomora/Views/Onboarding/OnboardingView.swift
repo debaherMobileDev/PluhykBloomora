@@ -46,6 +46,18 @@ struct OnboardingView: View {
             description: "Express your thoughts, capture ideas, and reflect on your journey with guided prompts and insights.",
             imageName: "book.fill",
             color: "#3c166d"
+        ),
+        OnboardingStep(
+            title: "Personalize Your Experience",
+            description: "Tell us about yourself and set your daily mindfulness goals.",
+            imageName: "person.fill",
+            color: "#1a2962"
+        ),
+        OnboardingStep(
+            title: "Choose Your Activities",
+            description: "Select the mindfulness activities you'd like to practice.",
+            imageName: "sparkles",
+            color: "#3c166d"
         )
     ]
     
@@ -54,8 +66,7 @@ struct OnboardingView: View {
             Color(hex: steps[currentStep].color)
                 .ignoresSafeArea()
             
-            VStack(spacing: 30) {
-                Spacer()
+            VStack(spacing: 0) {
                 
                 // Progress Indicator
                 HStack(spacing: 8) {
@@ -66,83 +77,103 @@ struct OnboardingView: View {
                     }
                 }
                 .padding(.top, 20)
+                .padding(.bottom, 10)
                 
-                Spacer()
-                
-                // Icon
-                Image(systemName: steps[currentStep].imageName)
-                    .font(.system(size: 80))
-                    .foregroundColor(.white)
-                    .padding(.bottom, 20)
-                
-                // Title
-                Text(steps[currentStep].title)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                // Description
-                Text(steps[currentStep].description)
-                    .font(.system(size: 18))
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 20)
-                
-                // Personalization Section
-                if currentStep == steps.count - 1 {
-                    VStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("What should we call you?")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                            
-                            TextField("Your name", text: $nameInput)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(maxWidth: 300)
-                        }
+                // Scrollable Content
+                ScrollView {
+                    VStack(spacing: 30) {
+                        Spacer()
+                            .frame(height: 20)
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Daily mindfulness goal (minutes)")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                            
-                            HStack {
-                                Button(action: {
-                                    if dailyGoalMinutes > 5 {
-                                        dailyGoalMinutes -= 5
-                                    }
-                                }) {
-                                    Image(systemName: "minus.circle.fill")
-                                        .font(.system(size: 30))
-                                        .foregroundColor(Color(hex: "#fbaa1a"))
+                        // Icon
+                        Image(systemName: steps[currentStep].imageName)
+                            .font(.system(size: 80))
+                            .foregroundColor(.white)
+                            .padding(.bottom, 20)
+                        
+                        // Title
+                        Text(steps[currentStep].title)
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        // Description
+                        Text(steps[currentStep].description)
+                            .font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.9))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                            .padding(.bottom, 20)
+                        
+                        // Personalization Section - Step 6 (Name and Goal)
+                        if currentStep == 5 {
+                            VStack(spacing: 25) {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("What should we call you?")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(.white)
+                                    
+                                    TextField("Your name", text: $nameInput)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(maxWidth: 350)
+                                        .font(.system(size: 16))
                                 }
+                                .frame(maxWidth: .infinity)
                                 
-                                Text("\(dailyGoalMinutes)")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 60)
-                                
-                                Button(action: {
-                                    if dailyGoalMinutes < 120 {
-                                        dailyGoalMinutes += 5
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("Daily mindfulness goal")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(.white)
+                                    
+                                    HStack(spacing: 20) {
+                                        Button(action: {
+                                            if dailyGoalMinutes > 5 {
+                                                dailyGoalMinutes -= 5
+                                            }
+                                        }) {
+                                            Image(systemName: "minus.circle.fill")
+                                                .font(.system(size: 40))
+                                                .foregroundColor(Color(hex: "#fbaa1a"))
+                                        }
+                                        
+                                        VStack(spacing: 4) {
+                                            Text("\(dailyGoalMinutes)")
+                                                .font(.system(size: 48, weight: .bold))
+                                                .foregroundColor(.white)
+                                            
+                                            Text("minutes")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.white.opacity(0.8))
+                                        }
+                                        .frame(width: 120)
+                                        
+                                        Button(action: {
+                                            if dailyGoalMinutes < 120 {
+                                                dailyGoalMinutes += 5
+                                            }
+                                        }) {
+                                            Image(systemName: "plus.circle.fill")
+                                                .font(.system(size: 40))
+                                                .foregroundColor(Color(hex: "#fbaa1a"))
+                                        }
                                     }
-                                }) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 30))
-                                        .foregroundColor(Color(hex: "#fbaa1a"))
+                                    .frame(maxWidth: .infinity)
                                 }
+                                .frame(maxWidth: .infinity)
                             }
+                            .padding(.horizontal, 30)
                         }
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Preferred mindfulness activities")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                        // Activity Selection - Step 7
+                        if currentStep == 6 {
+                            VStack(alignment: .leading, spacing: 15) {
+                                Text("Select activities you'd like to practice:")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 30)
+                                
+                                VStack(spacing: 12) {
                                     ForEach(MindfulnessEntry.ActivityType.allCases, id: \.self) { activity in
                                         Button(action: {
                                             if selectedActivities.contains(activity) {
@@ -151,30 +182,37 @@ struct OnboardingView: View {
                                                 selectedActivities.insert(activity)
                                             }
                                         }) {
-                                            VStack {
+                                            HStack(spacing: 15) {
                                                 Text(activity.icon)
-                                                    .font(.system(size: 30))
+                                                    .font(.system(size: 28))
+                                                
                                                 Text(activity.rawValue)
-                                                    .font(.system(size: 12))
+                                                    .font(.system(size: 17, weight: .medium))
+                                                    .foregroundColor(.white)
+                                                
+                                                Spacer()
+                                                
+                                                Image(systemName: selectedActivities.contains(activity) ? "checkmark.circle.fill" : "circle")
+                                                    .font(.system(size: 24))
+                                                    .foregroundColor(selectedActivities.contains(activity) ? Color(hex: "#fbaa1a") : .white.opacity(0.5))
                                             }
-                                            .padding(12)
+                                            .padding()
                                             .background(
                                                 selectedActivities.contains(activity) ?
-                                                Color(hex: "#fbaa1a") : Color.white.opacity(0.2)
+                                                Color.white.opacity(0.25) : Color.white.opacity(0.1)
                                             )
-                                            .foregroundColor(.white)
                                             .cornerRadius(12)
                                         }
                                     }
                                 }
-                                .padding(.horizontal)
+                                .padding(.horizontal, 30)
                             }
                         }
+                        
+                        Spacer()
+                            .frame(height: 40)
                     }
-                    .padding(.bottom, 20)
                 }
-                
-                Spacer()
                 
                 // Buttons
                 HStack(spacing: 15) {
