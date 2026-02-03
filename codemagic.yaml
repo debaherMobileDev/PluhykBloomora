@@ -1,0 +1,124 @@
+workflows:
+  ios-production:
+    name: PluhykBloomora iOS Production
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    
+    integrations:
+      app_store_connect: Pluhyk Bloomora
+    
+    environment:
+      groups:
+        - PluhykBloomora_Credentials
+      
+      vars:
+        BUNDLE_ID: "com.rup.pl7n5kbl00m"
+        APP_STORE_APPLE_ID: 6758214455
+        XCODE_PROJECT: "PluhykBloomora.xcodeproj"
+        XCODE_SCHEME: "PluhykBloomora"
+      
+      xcode: latest
+      
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.rup.pl7n5kbl00m
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+        - pattern: 'master'
+          include: true
+          source: true
+
+    scripts:
+      - name: Check project files
+        script: |
+          echo "📂 Checking project structure..."
+          ls -la
+          
+          if [ ! -f "$XCODE_PROJECT/project.pbxproj" ]; then
+            echo "❌ ERROR: Xcode project not found!"
+            exit 1
+          fi
+          
+          if [ ! -f "PluhykBloomora/GoogleService-Info.plist" ]; then
+            echo "❌ ERROR: GoogleService-Info.plist not found!"
+            exit 1
+          fi
+          
+          echo "✅ All required files present"
+      
+      - name: Set up code signing
+        script: |
+          echo "🔐 Setting up provisioning profiles..."
+          xcode-project use-profiles
+      
+      - name: Fetch dependencies
+        script: |
+          echo "📦 SPM dependencies will be fetched automatically during build"
+          echo "Checking Package.resolved..."
+          if [ -f "PluhykBloomora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved" ]; then
+            cat PluhykBloomora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          fi
+      
+      - name: Increment build number
+        script: |
+          echo "🔢 Incrementing build number..."
+          cd "$CM_BUILD_DIR"
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID")
+          if [ -z "$LATEST_BUILD_NUMBER" ]; then
+            LATEST_BUILD_NUMBER=0
+          fi
+          NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          echo "Latest build: $LATEST_BUILD_NUMBER, New build: $NEW_BUILD_NUMBER"
+          agvtool new-version -all $NEW_BUILD_NUMBER
+      
+      - name: Build IPA for App Store
+        script: |
+          echo "🔨 Building IPA..."
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+      
+      - name: Verify IPA
+        script: |
+          echo "🔍 Verifying IPA..."
+          IPA_PATH=$(find build/ios/ipa -name "*.ipa" | head -n1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "❌ ERROR: IPA not found!"
+            exit 1
+          fi
+          
+          echo "✅ IPA found: $IPA_PATH"
+          ls -lh "$IPA_PATH"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Logs/**/*.xcactivitylog
+
+    publishing:
+      email:
+        recipients:
+          - devs@unnamedtm.com
+        notify:
+          success: true
+          failure: true
+      
+      app_store_connect:
+        auth: integration
+        
+        # TestFlight
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testing
+        expire_build_submitted_for_review: true
+        
+        # App Store (пока отключено, включишь когда будешь готов)
+        submit_to_app_store: false
+        # cancel_previous_submissions: true
+        # release_type: AFTER_APPROVAL
