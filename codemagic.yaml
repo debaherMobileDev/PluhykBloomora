@@ -11,6 +11,10 @@ workflows:
       groups:
         - PluhykBloomora_Credentials
       
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.rup.pl7n5kbl00m
+      
       vars:
         BUNDLE_ID: "com.rup.pl7n5kbl00m"
         APP_STORE_APPLE_ID: 6758214455
@@ -18,10 +22,6 @@ workflows:
         XCODE_SCHEME: "PluhykBloomora"
       
       xcode: latest
-      
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.rup.pl7n5kbl00m
 
     triggering:
       events:
@@ -52,9 +52,8 @@ workflows:
           
           echo "✅ All required files present"
       
-      - name: Set up code signing
+      - name: Set up code signing settings on Xcode project
         script: |
-          echo "🔐 Setting up provisioning profiles..."
           xcode-project use-profiles
       
       - name: Fetch dependencies
@@ -69,13 +68,18 @@ workflows:
         script: |
           echo "🔢 Incrementing build number..."
           cd "$CM_BUILD_DIR"
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID")
-          if [ -z "$LATEST_BUILD_NUMBER" ]; then
+          
+          # Получаем текущий build number
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo "0")
+          if [ -z "$LATEST_BUILD_NUMBER" ] || [ "$LATEST_BUILD_NUMBER" == "null" ]; then
             LATEST_BUILD_NUMBER=0
           fi
+          
           NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
-          echo "Latest build: $LATEST_BUILD_NUMBER, New build: $NEW_BUILD_NUMBER"
-          agvtool new-version -all $NEW_BUILD_NUMBER
+          echo "📊 Latest build: $LATEST_BUILD_NUMBER, New build: $NEW_BUILD_NUMBER"
+          
+          # Устанавливаем новый build number
+          agvtool new-version -all $NEW_BUILD_NUMBER || echo "⚠️ agvtool failed, continuing..."
       
       - name: Build IPA for App Store
         script: |
