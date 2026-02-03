@@ -55,6 +55,27 @@ struct SettingsView: View {
                     }
                 }
                 
+                // Links
+                Section(header: Text("Information")) {
+                    NavigationLink(destination: WebLinkView(url: "https://pluhykbloomora.com/privacy-policy.html", title: "Privacy Policy")) {
+                        HStack {
+                            Image(systemName: "hand.raised")
+                                .foregroundColor(Color(hex: "#2490ad"))
+                            Text("Privacy Policy")
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    
+                    NavigationLink(destination: WebLinkView(url: "https://pluhykbloomora.com/support.html", title: "Support")) {
+                        HStack {
+                            Image(systemName: "questionmark.circle")
+                                .foregroundColor(Color(hex: "#2490ad"))
+                            Text("Support")
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+                
                 // App Actions
                 Section(header: Text("Actions")) {
                     Button(action: {

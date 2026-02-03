@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct PluhykBloomoraApp: App {
+    
+    // Регистрируем AppDelegate для Firebase
+    @UIApplicationDelegateAdaptor(FirebaseAppDelegate.self) var delegate
+    
     var body: some Scene {
         WindowGroup {
-            MainView()
+            LaunchDecisionView()
         }
     }
 }
@@ -20,36 +24,38 @@ struct MainView: View {
     @AppStorage(DataPersistenceService.Keys.hasCompletedOnboarding) private var hasCompletedOnboarding = false
     
     var body: some View {
-        if hasCompletedOnboarding {
-            TabView {
-                DashboardView()
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
-                
-                TaskOrganizerView()
-                    .tabItem {
-                        Label("Tasks", systemImage: "checkmark.circle.fill")
-                    }
-                
-                MindfulnessTrackerView()
-                    .tabItem {
-                        Label("Mindfulness", systemImage: "heart.fill")
-                    }
-                
-                CreativeJournalView()
-                    .tabItem {
-                        Label("Journal", systemImage: "book.fill")
-                    }
-                
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gearshape.fill")
-                    }
+        Group {
+            if hasCompletedOnboarding {
+                TabView {
+                    DashboardView()
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
+                        }
+                    
+                    TaskOrganizerView()
+                        .tabItem {
+                            Label("Tasks", systemImage: "checkmark.circle.fill")
+                        }
+                    
+                    MindfulnessTrackerView()
+                        .tabItem {
+                            Label("Mindfulness", systemImage: "heart.fill")
+                        }
+                    
+                    CreativeJournalView()
+                        .tabItem {
+                            Label("Journal", systemImage: "book.fill")
+                        }
+                    
+                    SettingsView()
+                        .tabItem {
+                            Label("Settings", systemImage: "gearshape.fill")
+                        }
+                }
+                .accentColor(Color(hex: "#2490ad"))
+            } else {
+                OnboardingView()
             }
-            .accentColor(Color(hex: "#2490ad"))
-        } else {
-            OnboardingView()
         }
     }
 }
