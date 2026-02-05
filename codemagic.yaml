@@ -11,6 +11,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.rup.pl7n5kbl00m
+        certificate: PLUHYK_DIST_CERT
       
       vars:
         BUNDLE_ID: "com.rup.pl7n5kbl00m"
@@ -49,11 +50,40 @@ workflows:
           
           echo "✅ All required files present"
       
+      - name: Verify certificate
+        script: |
+          echo "🔍 Verifying distribution certificate..."
+          security find-identity -v -p codesigning | grep -i "distribution" || {
+            echo "❌ ERROR: No distribution certificate found in keychain!"
+            echo "Available identities:"
+            security find-identity -v -p codesigning
+            exit 1
+          }
+          echo "✅ Distribution certificate found"
+      
+      - name: Clean old profiles
+        script: |
+          echo "🧹 Cleaning old provisioning profiles..."
+          # Удаляем локальные закешированные профили
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*
+          echo "✅ Old profiles cleaned"
+      
       - name: Fetch signing files
         script: |
+          echo "🔐 Fetching and creating signing files for $BUNDLE_ID..."
+          
+          # Пробуем создать новый профиль с текущим сертификатом
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type APP_STORE \
-            --create
+            --create \
+            --verbose || {
+              echo "⚠️ First attempt failed, checking what we have..."
+              echo "Available certificates:"
+              security find-identity -v -p codesigning || true
+              echo "Trying again without strict mode..."
+              app-store-connect fetch-signing-files "$BUNDLE_ID" \
+                --type APP_STORE
+            }
       
       - name: Set up code signing settings on Xcode project
         script: |
