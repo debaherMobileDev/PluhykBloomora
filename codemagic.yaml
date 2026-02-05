@@ -97,11 +97,8 @@ workflows:
             CODE_SIGN_STYLE=Automatic \
             DEVELOPMENT_TEAM=$XCODE_TEAM_ID
           
-          echo "📦 Creating IPA..."
-          xcodebuild -exportArchive \
-            -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" \
-            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
-            -exportOptionsPlist /dev/stdin <<EOF
+          echo "📦 Creating export options..."
+          cat > /tmp/exportOptions.plist << 'PLIST_END'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -109,14 +106,20 @@ workflows:
     <key>method</key>
     <string>app-store</string>
     <key>teamID</key>
-    <string>$XCODE_TEAM_ID</string>
+    <string>R7AC9YNRDV</string>
     <key>uploadSymbols</key>
     <true/>
     <key>compileBitcode</key>
     <false/>
 </dict>
 </plist>
-EOF
+PLIST_END
+          
+          echo "📦 Creating IPA..."
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist /tmp/exportOptions.plist
           
           echo "✅ IPA created"
       
