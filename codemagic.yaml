@@ -49,17 +49,40 @@ workflows:
           
           echo "✅ All required files present"
       
+      - name: Diagnose App Store Connect API
+        script: |
+          echo "🔍 === DIAGNOSTIC MODE ==="
+          echo ""
+          echo "📋 Listing all certificates in Apple Developer Portal:"
+          app-store-connect list-certificates --type IOS_DISTRIBUTION || echo "Failed to list certificates"
+          echo ""
+          echo "📋 Listing all provisioning profiles:"
+          app-store-connect list-profiles || echo "Failed to list profiles"
+          echo ""
+          echo "📋 Listing all bundle identifiers:"
+          app-store-connect list-bundle-ids || echo "Failed to list bundle IDs"
+          echo ""
+          echo "🔍 Checking local keychain:"
+          security find-identity -v -p codesigning
+          echo ""
+          echo "=== END DIAGNOSTIC ==="
+      
       - name: Create provisioning profile via API
         script: |
-          echo "🔐 Creating provisioning profile for $BUNDLE_ID..."
+          echo "🔐 Attempting to fetch/create provisioning profile for $BUNDLE_ID..."
           
-          # Создаём профиль через App Store Connect API
-          # --create автоматически создаст профиль если его нет
+          # Пробуем с максимальной детализацией
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type APP_STORE \
-            --create || {
-              echo "⚠️ Failed to create profile automatically"
-              echo "Trying to use existing profiles..."
+            --create \
+            --verbose 2>&1 | tee /tmp/fetch-signing.log || {
+              echo ""
+              echo "❌ === FETCH FAILED ==="
+              echo "Full error log:"
+              cat /tmp/fetch-signing.log || true
+              echo ""
+              echo "⚠️ Provisioning profile creation failed. Check diagnostic output above."
+              exit 1
             }
       
       - name: Set up provisioning profiles and certs
