@@ -82,13 +82,12 @@ workflows:
       - name: Setup API key for signing
         script: |
           echo "🔐 Setting up App Store Connect API key..."
-          API_KEY_PATH=$(find ~/private_keys -name "AuthKey_*.p8" | head -n 1)
-          if [ -z "$API_KEY_PATH" ]; then
-            echo "❌ API key not found!"
-            ls -la ~/private_keys/ || echo "private_keys directory not found"
-            exit 1
-          fi
-          echo "✅ API key found at: $API_KEY_PATH"
+          mkdir -p ~/private_keys
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
+          export API_KEY_PATH=~/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
+          echo "✅ API key created at: $API_KEY_PATH"
+          echo "Key ID: $APP_STORE_CONNECT_KEY_IDENTIFIER"
+          echo "Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
           echo "API_KEY_PATH=$API_KEY_PATH" >> $CM_ENV
       
       - name: Build archive with automatic signing
