@@ -8,10 +8,6 @@ workflows:
       app_store_connect: Pluhyk Bloomora
     
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.rup.pl7n5kbl00m
-      
       vars:
         BUNDLE_ID: "com.rup.pl7n5kbl00m"
         APP_STORE_APPLE_ID: 6758214455
@@ -67,28 +63,46 @@ workflows:
           echo ""
           echo "=== END DIAGNOSTIC ==="
       
-      - name: Create provisioning profile via API
+      - name: Fetch and create signing files
         script: |
-          echo "🔐 Attempting to fetch/create provisioning profile for $BUNDLE_ID..."
+          echo "🔐 Fetching/creating signing files for $BUNDLE_ID..."
           
-          # Пробуем с максимальной детализацией
+          # Создаём профиль через App Store Connect API
+          # Это создаст профиль в Apple Developer Portal и скачает его
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type APP_STORE \
             --create \
-            --verbose 2>&1 | tee /tmp/fetch-signing.log || {
-              echo ""
-              echo "❌ === FETCH FAILED ==="
-              echo "Full error log:"
-              cat /tmp/fetch-signing.log || true
-              echo ""
-              echo "⚠️ Provisioning profile creation failed. Check diagnostic output above."
-              exit 1
-            }
+            --verbose 2>&1 | tee /tmp/fetch-signing.log
+          
+          FETCH_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ $FETCH_EXIT_CODE -ne 0 ]; then
+            echo ""
+            echo "❌ === FETCH FAILED ==="
+            echo "Full error log:"
+            cat /tmp/fetch-signing.log || true
+            echo ""
+            echo "⚠️ This usually means:"
+            echo "   1. Certificate doesn't exist in Apple Developer Portal"
+            echo "   2. API key doesn't have proper permissions"
+            echo "   3. Bundle ID is not registered"
+            echo ""
+            exit 1
+          fi
+          
+          echo "✅ Signing files fetched/created successfully"
       
-      - name: Set up provisioning profiles and certs
+      - name: Configure Xcode project signing
         script: |
-          echo "🔐 Setting up code signing..."
+          echo "🔧 Configuring Xcode project..."
+          
+          # Устанавливаем профили в проект
           xcode-project use-profiles
+          
+          # Проверяем, что профили установлены
+          echo ""
+          echo "Installed provisioning profiles:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || true
       
       - name: Fetch dependencies
         script: |
