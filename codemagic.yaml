@@ -13,8 +13,10 @@ workflows:
         APP_STORE_APPLE_ID: 6758214455
         XCODE_PROJECT: "PluhykBloomora.xcodeproj"
         XCODE_SCHEME: "PluhykBloomora"
+        XCODE_TEAM_ID: "R7AC9YNRDV"
       
       xcode: latest
+      cocoapods: default
 
     triggering:
       events:
@@ -45,64 +47,12 @@ workflows:
           
           echo "✅ All required files present"
       
-      - name: Diagnose App Store Connect API
+      - name: Setup App Store Connect authentication
         script: |
-          echo "🔍 === DIAGNOSTIC MODE ==="
-          echo ""
-          echo "📋 Listing all certificates in Apple Developer Portal:"
-          app-store-connect list-certificates --type IOS_DISTRIBUTION || echo "Failed to list certificates"
-          echo ""
-          echo "📋 Listing all provisioning profiles:"
-          app-store-connect list-profiles || echo "Failed to list profiles"
-          echo ""
-          echo "📋 Listing all bundle identifiers:"
-          app-store-connect list-bundle-ids || echo "Failed to list bundle IDs"
-          echo ""
-          echo "🔍 Checking local keychain:"
-          security find-identity -v -p codesigning
-          echo ""
-          echo "=== END DIAGNOSTIC ==="
-      
-      - name: Fetch and create signing files
-        script: |
-          echo "🔐 Fetching/creating signing files for $BUNDLE_ID..."
-          
-          # Создаём профиль через App Store Connect API
-          # Это создаст профиль в Apple Developer Portal и скачает его
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create \
-            --verbose 2>&1 | tee /tmp/fetch-signing.log
-          
-          FETCH_EXIT_CODE=${PIPESTATUS[0]}
-          
-          if [ $FETCH_EXIT_CODE -ne 0 ]; then
-            echo ""
-            echo "❌ === FETCH FAILED ==="
-            echo "Full error log:"
-            cat /tmp/fetch-signing.log || true
-            echo ""
-            echo "⚠️ This usually means:"
-            echo "   1. Certificate doesn't exist in Apple Developer Portal"
-            echo "   2. API key doesn't have proper permissions"
-            echo "   3. Bundle ID is not registered"
-            echo ""
-            exit 1
-          fi
-          
-          echo "✅ Signing files fetched/created successfully"
-      
-      - name: Configure Xcode project signing
-        script: |
-          echo "🔧 Configuring Xcode project..."
-          
-          # Устанавливаем профили в проект
-          xcode-project use-profiles
-          
-          # Проверяем, что профили установлены
-          echo ""
-          echo "Installed provisioning profiles:"
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || true
+          echo "🔐 Setting up App Store Connect API authentication..."
+          echo "Team ID: $XCODE_TEAM_ID"
+          echo "Bundle ID: $BUNDLE_ID"
+          echo "✅ Ready for automatic signing via xcodebuild"
       
       - name: Fetch dependencies
         script: |
@@ -131,10 +81,44 @@ workflows:
       
       - name: Build IPA for App Store
         script: |
-          echo "🔨 Building IPA..."
-          xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME"
+          echo "🔨 Building IPA with automatic signing..."
+          
+          # Используем xcodebuild напрямую с -allowProvisioningUpdates
+          # Это позволит Xcode автоматически создать provisioning profile
+          xcodebuild archive \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_*.p8 \
+            -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER \
+            -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=$XCODE_TEAM_ID
+          
+          echo "📦 Creating IPA..."
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist /dev/stdin <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+    <key>teamID</key>
+    <string>$XCODE_TEAM_ID</string>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>compileBitcode</key>
+    <false/>
+</dict>
+</plist>
+EOF
+          
+          echo "✅ IPA created"
       
       - name: Verify IPA
         script: |
