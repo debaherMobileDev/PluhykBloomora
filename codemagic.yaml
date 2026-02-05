@@ -70,7 +70,7 @@ workflows:
           # Создаём профиль через App Store Connect API
           # Это создаст профиль в Apple Developer Portal и скачает его
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type APP_STORE \
+            --type IOS_APP_STORE \
             --create \
             --verbose 2>&1 | tee /tmp/fetch-signing.log
           
