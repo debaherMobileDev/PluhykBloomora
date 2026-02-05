@@ -49,43 +49,22 @@ workflows:
           
           echo "✅ All required files present"
       
-      - name: Verify certificate
+      - name: Create provisioning profile via API
         script: |
-          echo "🔍 Verifying distribution certificate..."
-          security find-identity -v -p codesigning | grep -i "distribution" || {
-            echo "❌ ERROR: No distribution certificate found in keychain!"
-            echo "Available identities:"
-            security find-identity -v -p codesigning
-            exit 1
-          }
-          echo "✅ Distribution certificate found"
-      
-      - name: Clean old profiles
-        script: |
-          echo "🧹 Cleaning old provisioning profiles..."
-          # Удаляем локальные закешированные профили
-          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*
-          echo "✅ Old profiles cleaned"
-      
-      - name: Fetch signing files
-        script: |
-          echo "🔐 Fetching and creating signing files for $BUNDLE_ID..."
+          echo "🔐 Creating provisioning profile for $BUNDLE_ID..."
           
-          # Пробуем создать новый профиль с текущим сертификатом
+          # Создаём профиль через App Store Connect API
+          # --create автоматически создаст профиль если его нет
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type APP_STORE \
-            --create \
-            --verbose || {
-              echo "⚠️ First attempt failed, checking what we have..."
-              echo "Available certificates:"
-              security find-identity -v -p codesigning || true
-              echo "Trying again without strict mode..."
-              app-store-connect fetch-signing-files "$BUNDLE_ID" \
-                --type APP_STORE
+            --create || {
+              echo "⚠️ Failed to create profile automatically"
+              echo "Trying to use existing profiles..."
             }
       
-      - name: Set up code signing settings on Xcode project
+      - name: Set up provisioning profiles and certs
         script: |
+          echo "🔐 Setting up code signing..."
           xcode-project use-profiles
       
       - name: Fetch dependencies
