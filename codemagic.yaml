@@ -82,45 +82,13 @@ workflows:
       - name: Build IPA for App Store
         script: |
           echo "🔨 Building IPA with automatic signing..."
-          
-          # Используем xcodebuild напрямую с -allowProvisioningUpdates
-          # Это позволит Xcode автоматически создать provisioning profile
-          xcodebuild archive \
-            -project "$XCODE_PROJECT" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Release \
-            -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_*.p8 \
-            -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER \
-            -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
-            CODE_SIGN_STYLE=Automatic \
-            DEVELOPMENT_TEAM=$XCODE_TEAM_ID
-          
+          xcodebuild archive -project "$XCODE_PROJECT" -scheme "$XCODE_SCHEME" -configuration Release -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" -allowProvisioningUpdates -authenticationKeyPath ~/private_keys/AuthKey_*.p8 -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM=$XCODE_TEAM_ID
           echo "📦 Creating export options..."
-          cat > /tmp/exportOptions.plist << 'PLIST_END'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>app-store</string>
-    <key>teamID</key>
-    <string>R7AC9YNRDV</string>
-    <key>uploadSymbols</key>
-    <true/>
-    <key>compileBitcode</key>
-    <false/>
-</dict>
-</plist>
-PLIST_END
-          
+          echo '<?xml version="1.0" encoding="UTF-8"?>' > /tmp/exportOptions.plist
+          echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> /tmp/exportOptions.plist
+          echo '<plist version="1.0"><dict><key>method</key><string>app-store</string><key>teamID</key><string>R7AC9YNRDV</string><key>uploadSymbols</key><true/><key>compileBitcode</key><false/></dict></plist>' >> /tmp/exportOptions.plist
           echo "📦 Creating IPA..."
-          xcodebuild -exportArchive \
-            -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" \
-            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
-            -exportOptionsPlist /tmp/exportOptions.plist
-          
+          xcodebuild -exportArchive -archivePath "$CM_BUILD_DIR/build/PluhykBloomora.xcarchive" -exportPath "$CM_BUILD_DIR/build/ios/ipa" -exportOptionsPlist /tmp/exportOptions.plist
           echo "✅ IPA created"
       
       - name: Verify IPA
