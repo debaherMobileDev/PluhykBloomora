@@ -79,6 +79,12 @@ workflows:
           # Устанавливаем новый build number
           agvtool new-version -all $NEW_BUILD_NUMBER || echo "⚠️ agvtool failed, continuing..."
       
+      - name: Create export options
+        script: |
+          echo "📦 Creating export options..."
+          printf '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n  <key>method</key>\n  <string>app-store</string>\n  <key>teamID</key>\n  <string>R7AC9YNRDV</string>\n  <key>uploadSymbols</key>\n  <true/>\n  <key>compileBitcode</key>\n  <false/>\n  <key>signingStyle</key>\n  <string>automatic</string>\n</dict>\n</plist>\n' > /Users/builder/export_options.plist
+          cat /Users/builder/export_options.plist
+      
       - name: Build IPA for App Store
         script: |
           echo "🔨 Building IPA with automatic signing..."
