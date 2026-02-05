@@ -8,9 +8,6 @@ workflows:
       app_store_connect: Pluhyk Bloomora
     
     environment:
-      groups:
-        - PluhykBloomora_Credentials
-      
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.rup.pl7n5kbl00m
