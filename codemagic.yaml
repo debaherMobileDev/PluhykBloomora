@@ -49,6 +49,12 @@ workflows:
           
           echo "✅ All required files present"
       
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type APP_STORE \
+            --create
+      
       - name: Set up code signing settings on Xcode project
         script: |
           xcode-project use-profiles
