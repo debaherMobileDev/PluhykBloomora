@@ -11,7 +11,6 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.rup.pl7n5kbl00m
-        certificate: PLUHYK_DIST_CERT
       
       vars:
         BUNDLE_ID: "com.rup.pl7n5kbl00m"
