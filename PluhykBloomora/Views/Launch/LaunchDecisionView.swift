@@ -68,13 +68,10 @@ struct LaunchDecisionView: View {
     private func handleFirstLaunch() {
         print("🆕 LaunchDecisionView: First launch detected")
         
-        // Инициализируем AppsFlyer
-        appsFlyerManager.configure()
-        appsFlyerManager.start()
-        
-        // Регистрируем callback для conversion data
+        // ВАЖНО: Регистрируем callbacks ДО start()
         appsFlyerManager.onConversionData { [self] data in
             print("📊 LaunchDecisionView: Received conversion data")
+            print("📊 Conversion Data: \(data)")
             
             // Проверяем af_status и делаем повторный запрос если Organic
             appsFlyerManager.checkAndRetryIfOrganic(conversionData: data) { finalData in
@@ -86,8 +83,13 @@ struct LaunchDecisionView: View {
         // Регистрируем callback для deep link
         appsFlyerManager.onDeepLink { [self] data in
             print("🔗 LaunchDecisionView: Received deep link data")
+            print("🔗 Deep Link Data: \(data)")
             self.deepLinkData = data
         }
+        
+        // Инициализируем и запускаем AppsFlyer ПОСЛЕ регистрации callbacks
+        appsFlyerManager.configure()
+        appsFlyerManager.start()
         
         // Даем время на получение данных (таймаут 10 секунд)
         DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {

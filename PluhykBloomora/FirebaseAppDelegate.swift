@@ -23,9 +23,11 @@ class FirebaseAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCe
         // Настройка UNUserNotificationCenter
         UNUserNotificationCenter.current().delegate = self
         
-        // Инициализация сервисов
+        // Инициализация Firebase
         FirebaseManager.shared.configure()
-        AppsFlyerManager.shared.configure()
+        
+        // AppsFlyer инициализируется в LaunchDecisionView
+        // чтобы callbacks были зарегистрированы ДО start()
         
         return true
     }
